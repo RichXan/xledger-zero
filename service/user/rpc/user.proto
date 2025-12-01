@@ -1,0 +1,120 @@
+syntax = "proto3";
+
+package user;
+option go_package = "./user";
+
+// 用户信息
+message User {
+  string id = 1;
+  string username = 2;
+  string email = 3;
+  string password = 4;
+  string gender = 5;
+  string avatar = 6;
+  string status = 7;
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+// 添加用户请求
+message AddUserRequest {
+  string username = 1;
+  string email = 2;
+  string password = 3;
+  string gender = 4;
+  string avatar = 5;
+  string status = 6;
+}
+message AddUserResponse {
+  int64 code = 1;
+  string message = 2;
+  User data = 3;
+}
+
+// 用户登录请求
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginData {
+  User user = 1;
+  string access_token = 2;
+  string refresh_token = 3;
+  int64 expires_in = 4;
+  string token_type = 5;
+}
+
+message LoginResponse {
+  int64 code = 1;
+  string message = 2;
+  LoginData data = 3;
+}
+
+// 获取用户信息请求
+message GetUserRequest {
+  string id = 1;
+}
+
+message GetUserResponse {
+  int64 code = 1;
+  string message = 2;
+  User data = 3;
+}
+
+// 更新用户信息请求
+message UpdateUserRequest {
+  string id = 1;
+  string username = 2;
+  string email = 3;
+  string gender = 4;
+  string avatar = 5;
+  string status = 6;
+}
+
+message UpdateUserResponse {
+  int64 code = 1;
+  string message = 2;
+  User data = 3;
+}
+
+// 删除用户请求
+message DeleteUserRequest {
+  string id = 1;
+}
+
+message DeleteUserResponse {
+  int64 code = 1;
+  string message = 2;
+}
+
+// 用户列表请求
+message ListUserRequest {
+  int64 page = 1;
+  int64 page_size = 2;
+  string username = 3;
+  string email = 4;
+  string status = 5;
+}
+
+message ListUserData {
+  repeated User list = 1;
+  int64 total = 2;
+  int64 page = 3;
+  int64 page_size = 4;
+}
+
+message ListUserResponse {
+  int64 code = 1;
+  string message = 2;
+  ListUserData data = 3;
+}
+
+// 用户服务定义
+service UserService {
+  rpc AddUser(AddUserRequest) returns (AddUserResponse);
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
+  rpc ListUsers(ListUserRequest) returns (ListUserResponse);
+}

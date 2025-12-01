@@ -1,0 +1,440 @@
+syntax = "v1"
+
+info (
+	title:   "XLedger用户微服务"
+	desc:    "记账系统用户管理微服务API"
+	author:  "xan"
+	email:   "xan@example.com"
+	version: "v1.0"
+)
+
+// ===== 公共类型定义 =====
+type User {
+	Id        int64  `json:"id"`
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+	Name      string `json:"name"`
+	AvatarUrl string `json:"avatar_url"`
+	Status    int64  `json:"status"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+}
+
+type Category {
+	Id        int64  `json:"id"`
+	UserId    int64  `json:"user_id"`
+	Name      string `json:"name"`
+	Icon      string `json:"icon"`
+	Color     string `json:"color"`
+	Type      int64  `json:"type"` // 1: 收入, 2: 支出
+	SortOrder int64  `json:"sort_order"`
+	IsSystem  bool   `json:"is_system"`
+	Status    int64  `json:"status"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+}
+
+type SubCategory {
+	Id         int64  `json:"id"`
+	CategoryId int64  `json:"category_id"`
+	UserId     int64  `json:"user_id"`
+	Name       string `json:"name"`
+	Icon       string `json:"icon"`
+	Color      string `json:"color"`
+	SortOrder  int64  `json:"sort_order"`
+	Status     int64  `json:"status"`
+	CreatedAt  string `json:"created_at"`
+	UpdatedAt  string `json:"updated_at"`
+}
+
+type Bill {
+	Id            int64    `json:"id"`
+	UserId        int64    `json:"user_id"`
+	CategoryId    int64    `json:"category_id"`
+	SubCategoryId int64    `json:"sub_category_id,optional"`
+	Amount        float64  `json:"amount"`
+	Type          int64    `json:"type"` // 1: 收入, 2: 支出
+	Description   string   `json:"description"`
+	Note          string   `json:"note"`
+	BillDate      string   `json:"bill_date"`
+	Tags          []string `json:"tags"`
+	Location      string   `json:"location"`
+	Images        []string `json:"images"`
+	Status        int64    `json:"status"`
+	CreatedAt     string   `json:"created_at"`
+	UpdatedAt     string   `json:"updated_at"`
+}
+
+// ===== OAuth2/OIDC 相关类型 =====
+type OAuthClient {
+	Id            int64    `json:"id"`
+	ClientId      string   `json:"client_id"`
+	ClientSecret  string   `json:"client_secret"`
+	ClientName    string   `json:"client_name"`
+	RedirectUris  []string `json:"redirect_uris"`
+	GrantTypes    []string `json:"grant_types"`
+	ResponseTypes []string `json:"response_types"`
+	Scope         string   `json:"scope"`
+	CreatedAt     string   `json:"created_at"`
+	UpdatedAt     string   `json:"updated_at"`
+}
+
+// ===== 请求响应类型 =====
+// 用户注册
+type RegisterRequest {
+	Username string `json:"username" validate:"required,min=3,max=50"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=6,max=50"`
+	Name     string `json:"name" validate:"max=100"`
+}
+
+type RegisterResponse {
+	Code    int64  `json:"code"`
+	Message string `json:"message"`
+	Data    User   `json:"data"`
+}
+
+// 用户登录
+type LoginRequest {
+	Username string `json:"username" validate:"required"`
+	Password string `json:"password" validate:"required"`
+}
+
+type LoginData {
+	User         User   `json:"user"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int64  `json:"expires_in"`
+	TokenType    string `json:"token_type"`
+}
+
+type LoginResponse {
+	Code    int64     `json:"code"`
+	Message string    `json:"message"`
+	Data    LoginData `json:"data"`
+}
+
+// OAuth2授权码获取
+type AuthorizeRequest {
+	ResponseType        string `form:"response_type" validate:"required"`
+	ClientId            string `form:"client_id" validate:"required"`
+	RedirectUri         string `form:"redirect_uri" validate:"required"`
+	Scope               string `form:"scope,optional"`
+	State               string `form:"state,optional"`
+	CodeChallenge       string `form:"code_challenge,optional"`
+	CodeChallengeMethod string `form:"code_challenge_method,optional"`
+}
+
+type AuthorizeResponse {
+	Code        string `json:"code"`
+	State       string `json:"state"`
+	RedirectUri string `json:"redirect_uri"`
+}
+
+// OAuth2访问令牌获取
+type TokenRequest {
+	GrantType    string `json:"grant_type" validate:"required"`
+	Code         string `json:"code,optional"`
+	RedirectUri  string `json:"redirect_uri,optional"`
+	ClientId     string `json:"client_id" validate:"required"`
+	ClientSecret string `json:"client_secret,optional"`
+	RefreshToken string `json:"refresh_token,optional"`
+	CodeVerifier string `json:"code_verifier,optional"`
+}
+
+type TokenData {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int64  `json:"expires_in"`
+	TokenType    string `json:"token_type"`
+	Scope        string `json:"scope"`
+}
+
+type TokenResponse {
+	Code    int64     `json:"code"`
+	Message string    `json:"message"`
+	Data    TokenData `json:"data"`
+}
+
+// 用户信息获取
+type UserInfoData {
+	Sub       string `json:"sub"`
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	Username  string `json:"username"`
+	AvatarUrl string `json:"avatar_url"`
+}
+
+type UserInfoResponse {
+	Code    int64        `json:"code"`
+	Message string       `json:"message"`
+	Data    UserInfoData `json:"data"`
+}
+
+// 类目相关
+type CreateCategoryRequest {
+	Name      string `json:"name" validate:"required,max=100"`
+	Icon      string `json:"icon,optional"`
+	Color     string `json:"color,optional"`
+	Type      int64  `json:"type" validate:"required,min=1,max=2"`
+	SortOrder int64  `json:"sort_order,optional"`
+}
+
+type UpdateCategoryRequest {
+	Id        int64  `path:"id" validate:"required"`
+	Name      string `json:"name,optional"`
+	Icon      string `json:"icon,optional"`
+	Color     string `json:"color,optional"`
+	Type      int64  `json:"type,optional"`
+	SortOrder int64  `json:"sort_order,optional"`
+	Status    int64  `json:"status,optional"`
+}
+
+type CategoryListResponse {
+	Code    int64      `json:"code"`
+	Message string     `json:"message"`
+	Data    []Category `json:"data"`
+}
+
+type CategoryResponse {
+	Code    int64    `json:"code"`
+	Message string   `json:"message"`
+	Data    Category `json:"data"`
+}
+
+// 子类目相关
+type CreateSubCategoryRequest {
+	CategoryId int64  `json:"category_id" validate:"required"`
+	Name       string `json:"name" validate:"required,max=100"`
+	Icon       string `json:"icon,optional"`
+	Color      string `json:"color,optional"`
+	SortOrder  int64  `json:"sort_order,optional"`
+}
+
+type UpdateSubCategoryRequest {
+	Id         int64  `path:"id" validate:"required"`
+	CategoryId int64  `json:"category_id,optional"`
+	Name       string `json:"name,optional"`
+	Icon       string `json:"icon,optional"`
+	Color      string `json:"color,optional"`
+	SortOrder  int64  `json:"sort_order,optional"`
+	Status     int64  `json:"status,optional"`
+}
+
+type SubCategoryListResponse {
+	Code    int64         `json:"code"`
+	Message string        `json:"message"`
+	Data    []SubCategory `json:"data"`
+}
+
+type SubCategoryResponse {
+	Code    int64       `json:"code"`
+	Message string      `json:"message"`
+	Data    SubCategory `json:"data"`
+}
+
+// 账单相关
+type CreateBillRequest {
+	CategoryId    int64    `json:"category_id" validate:"required"`
+	SubCategoryId int64    `json:"sub_category_id,optional"`
+	Amount        float64  `json:"amount" validate:"required,min=0.01"`
+	Type          int64    `json:"type" validate:"required,min=1,max=2"`
+	Description   string   `json:"description,optional"`
+	Note          string   `json:"note,optional"`
+	BillDate      string   `json:"bill_date" validate:"required"`
+	Tags          []string `json:"tags,optional"`
+	Location      string   `json:"location,optional"`
+	Images        []string `json:"images,optional"`
+}
+
+type UpdateBillRequest {
+	Id            int64    `path:"id" validate:"required"`
+	CategoryId    int64    `json:"category_id,optional"`
+	SubCategoryId int64    `json:"sub_category_id,optional"`
+	Amount        float64  `json:"amount,optional"`
+	Type          int64    `json:"type,optional"`
+	Description   string   `json:"description,optional"`
+	Note          string   `json:"note,optional"`
+	BillDate      string   `json:"bill_date,optional"`
+	Tags          []string `json:"tags,optional"`
+	Location      string   `json:"location,optional"`
+	Images        []string `json:"images,optional"`
+	Status        int64    `json:"status,optional"`
+}
+
+type BillListRequest {
+	Page       int64  `form:"page,optional,default=1"`
+	PageSize   int64  `form:"page_size,optional,default=20"`
+	CategoryId int64  `form:"category_id,optional"`
+	Type       int64  `form:"type,optional"`
+	StartDate  string `form:"start_date,optional"`
+	EndDate    string `form:"end_date,optional"`
+	Keyword    string `form:"keyword,optional"`
+}
+
+type BillListData {
+	List     []Bill `json:"list"`
+	Total    int64  `json:"total"`
+	Page     int64  `json:"page"`
+	PageSize int64  `json:"page_size"`
+}
+
+type BillListResponse {
+	Code    int64        `json:"code"`
+	Message string       `json:"message"`
+	Data    BillListData `json:"data"`
+}
+
+type BillResponse {
+	Code    int64  `json:"code"`
+	Message string `json:"message"`
+	Data    Bill   `json:"data"`
+}
+
+// 统计相关
+type StatisticsRequest {
+	StartDate string `form:"start_date,optional"`
+	EndDate   string `form:"end_date,optional"`
+	Type      int64  `form:"type,optional"`
+}
+
+type CategoryStat {
+	CategoryId   int64   `json:"category_id"`
+	CategoryName string  `json:"category_name"`
+	Amount       float64 `json:"amount"`
+	Percentage   float64 `json:"percentage"`
+}
+
+type StatisticsData {
+	TotalIncome   float64        `json:"total_income"`
+	TotalExpense  float64        `json:"total_expense"`
+	Balance       float64        `json:"balance"`
+	CategoryStats []CategoryStat `json:"category_stats"`
+}
+
+type StatisticsResponse {
+	Code    int64          `json:"code"`
+	Message string         `json:"message"`
+	Data    StatisticsData `json:"data"`
+}
+
+// 公共响应
+type CommonResponse {
+	Code    int64  `json:"code"`
+	Message string `json:"message"`
+}
+
+// ===== API 服务定义 =====
+@server (
+	group: auth
+)
+service user-api {
+	// 用户注册
+	@handler RegisterHandler
+	post /api/auth/register (RegisterRequest) returns (RegisterResponse)
+
+	// 用户登录
+	@handler LoginHandler
+	post /api/auth/login (LoginRequest) returns (LoginResponse)
+
+	// OAuth2授权码获取
+	@handler AuthorizeHandler
+	get /oauth/authorize (AuthorizeRequest) returns (AuthorizeResponse)
+
+	// OAuth2访问令牌获取
+	@handler TokenHandler
+	post /oauth/token (TokenRequest) returns (TokenResponse)
+}
+
+@server (
+	group:      user
+	jwt:        Auth
+	middleware: AuthMiddleware
+)
+service user-api {
+	// 获取用户信息
+	@handler UserInfoHandler
+	get /api/user/info returns (UserInfoResponse)
+
+	// 获取OIDC用户信息
+	@handler OIDCUserInfoHandler
+	get /oidc/userinfo returns (UserInfoResponse)
+}
+
+@server (
+	group:      category
+	jwt:        Auth
+	middleware: AuthMiddleware
+)
+service user-api {
+	// 创建类目
+	@handler CreateCategoryHandler
+	post /api/categories (CreateCategoryRequest) returns (CategoryResponse)
+
+	// 获取类目列表
+	@handler CategoryListHandler
+	get /api/categories returns (CategoryListResponse)
+
+	// 更新类目
+	@handler UpdateCategoryHandler
+	put /api/categories/:id (UpdateCategoryRequest) returns (CategoryResponse)
+
+	// 删除类目
+	@handler DeleteCategoryHandler
+	delete /api/categories/:id returns (CommonResponse)
+}
+
+@server (
+	group:      subcategory
+	jwt:        Auth
+	middleware: AuthMiddleware
+)
+service user-api {
+	// 创建子类目
+	@handler CreateSubCategoryHandler
+	post /api/subcategories (CreateSubCategoryRequest) returns (SubCategoryResponse)
+
+	// 获取子类目列表
+	@handler SubCategoryListHandler
+	get /api/subcategories returns (SubCategoryListResponse)
+
+	// 更新子类目
+	@handler UpdateSubCategoryHandler
+	put /api/subcategories/:id (UpdateSubCategoryRequest) returns (SubCategoryResponse)
+
+	// 删除子类目
+	@handler DeleteSubCategoryHandler
+	delete /api/subcategories/:id returns (CommonResponse)
+}
+
+@server (
+	group:      bill
+	jwt:        Auth
+	middleware: AuthMiddleware
+)
+service user-api {
+	// 创建账单
+	@handler CreateBillHandler
+	post /api/bills (CreateBillRequest) returns (BillResponse)
+
+	// 获取账单列表
+	@handler BillListHandler
+	get /api/bills (BillListRequest) returns (BillListResponse)
+
+	// 获取账单详情
+	@handler BillDetailHandler
+	get /api/bills/:id returns (BillResponse)
+
+	// 更新账单
+	@handler UpdateBillHandler
+	put /api/bills/:id (UpdateBillRequest) returns (BillResponse)
+
+	// 删除账单
+	@handler DeleteBillHandler
+	delete /api/bills/:id returns (CommonResponse)
+
+	// 获取统计信息
+	@handler StatisticsHandler
+	get /api/bills/statistics (StatisticsRequest) returns (StatisticsResponse)
+}
+

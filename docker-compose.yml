@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: xledger_postgres
+    environment:
+      POSTGRES_DB: xledger
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "15432:5432"
+    volumes:
+      - ./persistent/postgres_data:/var/lib/postgresql/data
+    networks:
+      - xledger_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: xledger_redis
+    ports:
+      - "16379:6379"
+    command: redis-server --requirepass redis123
+    volumes:
+      - ./persistent/redis_data:/data
+    networks:
+      - xledger_network
+
+  # user-api:
+  #   build:
+  #     context: .
+  #     dockerfile: deploy/Dockerfile
+  #   container_name: xledger_user_api
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     - DB_HOST=xledger_postgres
+  #     - DB_PORT=5432
+  #     - DB_NAME=xledger
+  #     - DB_USER=xledger
+  #     - DB_PASSWORD=xledger123  
+  #     - REDIS_HOST=xledger_redis
+  #     - REDIS_PORT=6379
+  #     - REDIS_PASSWORD=redis123
+  #   depends_on:
+  #     - xledger_postgres
+  #     - xledger_redis
+  #   networks:
+  #     - xledger_network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  xledger_network:
+    driver: bridge

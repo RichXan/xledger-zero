@@ -1,0 +1,310 @@
+syntax = "v1"
+
+info (
+	title:   "XLedger记账微服务"
+	desc:    "记账系统账单管理微服务API"
+	author:  "xan"
+	email:   "xan@example.com"
+	version: "v1.0"
+)
+
+// ===== 公共类型定义 =====
+type LedgerRecord {
+	Id            int64    `json:"id"`
+	UserId        int64    `json:"user_id"`
+	CategoryId    int64    `json:"category_id"`
+	SubCategoryId int64    `json:"sub_category_id,optional"`
+	Amount        float64  `json:"amount"`
+	Type          int64    `json:"type"` // 1: 收入, 2: 支出
+	Description   string   `json:"description"`
+	Note          string   `json:"note"`
+	RecordDate    string   `json:"record_date"`
+	Tags          []string `json:"tags"`
+	Location      string   `json:"location"`
+	Images        []string `json:"images"`
+	Status        int64    `json:"status"`
+	CreatedAt     string   `json:"created_at"`
+	UpdatedAt     string   `json:"updated_at"`
+}
+
+type LedgerCategory {
+	Id        int64  `json:"id"`
+	UserId    int64  `json:"user_id"`
+	Name      string `json:"name"`
+	Icon      string `json:"icon"`
+	Color     string `json:"color"`
+	Type      int64  `json:"type"` // 1: 收入, 2: 支出
+	SortOrder int64  `json:"sort_order"`
+	IsSystem  bool   `json:"is_system"`
+	Status    int64  `json:"status"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+}
+
+type LedgerSubCategory {
+	Id         int64  `json:"id"`
+	CategoryId int64  `json:"category_id"`
+	UserId     int64  `json:"user_id"`
+	Name       string `json:"name"`
+	Icon       string `json:"icon"`
+	Color      string `json:"color"`
+	SortOrder  int64  `json:"sort_order"`
+	Status     int64  `json:"status"`
+	CreatedAt  string `json:"created_at"`
+	UpdatedAt  string `json:"updated_at"`
+}
+
+// ===== 请求响应类型 =====
+
+// 创建记账记录
+type CreateLedgerRecordRequest {
+	CategoryId    int64    `json:"category_id" validate:"required"`
+	SubCategoryId int64    `json:"sub_category_id,optional"`
+	Amount        float64  `json:"amount" validate:"required,min=0.01"`
+	Type          int64    `json:"type" validate:"required,min=1,max=2"`
+	Description   string   `json:"description,optional"`
+	Note          string   `json:"note,optional"`
+	RecordDate    string   `json:"record_date" validate:"required"`
+	Tags          []string `json:"tags,optional"`
+	Location      string   `json:"location,optional"`
+	Images        []string `json:"images,optional"`
+}
+
+type LedgerRecordResponse {
+	Code    int64        `json:"code"`
+	Message string       `json:"message"`
+	Data    LedgerRecord `json:"data"`
+}
+
+// 更新记账记录
+type UpdateLedgerRecordRequest {
+	Id            int64    `path:"id" validate:"required"`
+	CategoryId    int64    `json:"category_id,optional"`
+	SubCategoryId int64    `json:"sub_category_id,optional"`
+	Amount        float64  `json:"amount,optional"`
+	Type          int64    `json:"type,optional"`
+	Description   string   `json:"description,optional"`
+	Note          string   `json:"note,optional"`
+	RecordDate    string   `json:"record_date,optional"`
+	Tags          []string `json:"tags,optional"`
+	Location      string   `json:"location,optional"`
+	Images        []string `json:"images,optional"`
+	Status        int64    `json:"status,optional"`
+}
+
+// 删除记账记录
+type DeleteLedgerRecordRequest {
+	Id int64 `path:"id" validate:"required"`
+}
+
+type DeleteLedgerRecordResponse {
+	Code    int64  `json:"code"`
+	Message string `json:"message"`
+}
+
+// 查询记账记录列表
+type LedgerRecordListRequest {
+	Page       int64  `form:"page,optional,default=1"`
+	PageSize   int64  `form:"page_size,optional,default=20"`
+	CategoryId int64  `form:"category_id,optional"`
+	Type       int64  `form:"type,optional"`
+	StartDate  string `form:"start_date,optional"`
+	EndDate    string `form:"end_date,optional"`
+	Keyword    string `form:"keyword,optional"`
+}
+
+type LedgerRecordListData {
+	List     []LedgerRecord `json:"list"`
+	Total    int64          `json:"total"`
+	Page     int64          `json:"page"`
+	PageSize int64          `json:"page_size"`
+}
+
+type LedgerRecordListResponse {
+	Code    int64                `json:"code"`
+	Message string               `json:"message"`
+	Data    LedgerRecordListData `json:"data"`
+}
+
+// 获取记账记录详情
+type LedgerRecordDetailRequest {
+	Id int64 `path:"id" validate:"required"`
+}
+
+// 创建分类
+type CreateCategoryRequest {
+	Name      string `json:"name" validate:"required,max=100"`
+	Icon      string `json:"icon,optional"`
+	Color     string `json:"color,optional"`
+	Type      int64  `json:"type" validate:"required,min=1,max=2"`
+	SortOrder int64  `json:"sort_order,optional"`
+}
+
+type CategoryResponse {
+	Code    int64          `json:"code"`
+	Message string         `json:"message"`
+	Data    LedgerCategory `json:"data"`
+}
+
+// 更新分类
+type UpdateCategoryRequest {
+	Id        int64  `path:"id" validate:"required"`
+	Name      string `json:"name,optional"`
+	Icon      string `json:"icon,optional"`
+	Color     string `json:"color,optional"`
+	Type      int64  `json:"type,optional"`
+	SortOrder int64  `json:"sort_order,optional"`
+	Status    int64  `json:"status,optional"`
+}
+
+// 删除分类
+type DeleteCategoryRequest {
+	Id int64 `path:"id" validate:"required"`
+}
+
+// 分类列表
+type CategoryListResponse {
+	Code    int64            `json:"code"`
+	Message string           `json:"message"`
+	Data    []LedgerCategory `json:"data"`
+}
+
+// 创建子分类
+type CreateSubCategoryRequest {
+	CategoryId int64  `json:"category_id" validate:"required"`
+	Name       string `json:"name" validate:"required,max=100"`
+	Icon       string `json:"icon,optional"`
+	Color      string `json:"color,optional"`
+	SortOrder  int64  `json:"sort_order,optional"`
+}
+
+type SubCategoryResponse {
+	Code    int64              `json:"code"`
+	Message string             `json:"message"`
+	Data    LedgerSubCategory `json:"data"`
+}
+
+// 更新子分类
+type UpdateSubCategoryRequest {
+	Id         int64  `path:"id" validate:"required"`
+	CategoryId int64  `json:"category_id,optional"`
+	Name       string `json:"name,optional"`
+	Icon       string `json:"icon,optional"`
+	Color      string `json:"color,optional"`
+	SortOrder  int64  `json:"sort_order,optional"`
+	Status     int64  `json:"status,optional"`
+}
+
+// 删除子分类
+type DeleteSubCategoryRequest {
+	Id int64 `path:"id" validate:"required"`
+}
+
+// 子分类列表
+type SubCategoryListRequest {
+	CategoryId int64 `form:"category_id,optional"`
+}
+
+type SubCategoryListResponse {
+	Code    int64                `json:"code"`
+	Message string               `json:"message"`
+	Data    []LedgerSubCategory `json:"data"`
+}
+
+// 统计相关
+type LedgerStatisticsRequest {
+	StartDate string `form:"start_date,optional"`
+	EndDate   string `form:"end_date,optional"`
+	Type      int64  `form:"type,optional"`
+}
+
+type CategoryStatistics {
+	CategoryId   int64   `json:"category_id"`
+	CategoryName string  `json:"category_name"`
+	Amount       float64 `json:"amount"`
+	Percentage   float64 `json:"percentage"`
+}
+
+type LedgerStatisticsData {
+	TotalIncome   float64            `json:"total_income"`
+	TotalExpense  float64            `json:"total_expense"`
+	Balance       float64            `json:"balance"`
+	CategoryStats []CategoryStatistics `json:"category_stats"`
+}
+
+type LedgerStatisticsResponse {
+	Code    int64                 `json:"code"`
+	Message string                `json:"message"`
+	Data    LedgerStatisticsData `json:"data"`
+}
+
+// 公共响应
+type CommonResponse {
+	Code    int64  `json:"code"`
+	Message string `json:"message"`
+}
+
+// ===== API 服务定义 =====
+
+@server (
+	group:      ledger
+	jwt:        Auth
+	middleware: AuthMiddleware
+)
+service ledger-api {
+	// 创建记账记录
+	@handler CreateLedgerRecordHandler
+	post /api/ledger/records (CreateLedgerRecordRequest) returns (LedgerRecordResponse)
+
+	// 更新记账记录
+	@handler UpdateLedgerRecordHandler
+	put /api/ledger/records/:id (UpdateLedgerRecordRequest) returns (LedgerRecordResponse)
+
+	// 删除记账记录
+	@handler DeleteLedgerRecordHandler
+	delete /api/ledger/records/:id (DeleteLedgerRecordRequest) returns (CommonResponse)
+
+	// 获取记账记录列表
+	@handler LedgerRecordListHandler
+	get /api/ledger/records (LedgerRecordListRequest) returns (LedgerRecordListResponse)
+
+	// 获取记账记录详情
+	@handler LedgerRecordDetailHandler
+	get /api/ledger/records/:id (LedgerRecordDetailRequest) returns (LedgerRecordResponse)
+
+	// 创建分类
+	@handler CreateCategoryHandler
+	post /api/ledger/categories (CreateCategoryRequest) returns (CategoryResponse)
+
+	// 更新分类
+	@handler UpdateCategoryHandler
+	put /api/ledger/categories/:id (UpdateCategoryRequest) returns (CategoryResponse)
+
+	// 删除分类
+	@handler DeleteCategoryHandler
+	delete /api/ledger/categories/:id (DeleteCategoryRequest) returns (CommonResponse)
+
+	// 获取分类列表
+	@handler CategoryListHandler
+	get /api/ledger/categories returns (CategoryListResponse)
+
+	// 创建子分类
+	@handler CreateSubCategoryHandler
+	post /api/ledger/subcategories (CreateSubCategoryRequest) returns (SubCategoryResponse)
+
+	// 更新子分类
+	@handler UpdateSubCategoryHandler
+	put /api/ledger/subcategories/:id (UpdateSubCategoryRequest) returns (SubCategoryResponse)
+
+	// 删除子分类
+	@handler DeleteSubCategoryHandler
+	delete /api/ledger/subcategories/:id (DeleteSubCategoryRequest) returns (CommonResponse)
+
+	// 获取子分类列表
+	@handler SubCategoryListHandler
+	get /api/ledger/subcategories (SubCategoryListRequest) returns (SubCategoryListResponse)
+
+	// 获取统计信息
+	@handler LedgerStatisticsHandler
+	get /api/ledger/statistics (LedgerStatisticsRequest) returns (LedgerStatisticsResponse)
+}

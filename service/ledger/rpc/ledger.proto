@@ -1,0 +1,277 @@
+syntax = "proto3";
+
+package ledger;
+option go_package = "./ledger";
+
+// 记账记录消息定义
+message LedgerRecord {
+  int64 id = 1;
+  int64 user_id = 2;
+  int64 category_id = 3;
+  int64 sub_category_id = 4;
+  double amount = 5;
+  int64 type = 6; // 1: 收入, 2: 支出
+  string description = 7;
+  string note = 8;
+  string record_date = 9;
+  repeated string tags = 10;
+  string location = 11;
+  repeated string images = 12;
+  int64 status = 13;
+  string created_at = 14;
+  string updated_at = 15;
+}
+
+// 分类消息定义
+message LedgerCategory {
+  int64 id = 1;
+  int64 user_id = 2;
+  string name = 3;
+  string icon = 4;
+  string color = 5;
+  int64 type = 6; // 1: 收入, 2: 支出
+  int64 sort_order = 7;
+  bool is_system = 8;
+  int64 status = 9;
+  string created_at = 10;
+  string updated_at = 11;
+}
+
+// 子分类消息定义
+message LedgerSubCategory {
+  int64 id = 1;
+  int64 category_id = 2;
+  int64 user_id = 3;
+  string name = 4;
+  string icon = 5;
+  string color = 6;
+  int64 sort_order = 7;
+  int64 status = 8;
+  string created_at = 9;
+  string updated_at = 10;
+}
+
+// 记账记录相关请求响应
+message CreateLedgerRecordRequest {
+  int64 category_id = 1;
+  int64 sub_category_id = 2;
+  double amount = 3;
+  int64 type = 4;
+  string description = 5;
+  string note = 6;
+  string record_date = 7;
+  repeated string tags = 8;
+  string location = 9;
+  repeated string images = 10;
+}
+
+message CreateLedgerRecordResponse {
+  int64 code = 1;
+  string message = 2;
+  LedgerRecord data = 3;
+}
+
+message UpdateLedgerRecordRequest {
+  int64 id = 1;
+  int64 category_id = 2;
+  int64 sub_category_id = 3;
+  double amount = 4;
+  int64 type = 5;
+  string description = 6;
+  string note = 7;
+  string record_date = 8;
+  repeated string tags = 9;
+  string location = 10;
+  repeated string images = 11;
+  int64 status = 12;
+}
+
+message UpdateLedgerRecordResponse {
+  int64 code = 1;
+  string message = 2;
+  LedgerRecord data = 3;
+}
+
+message DeleteLedgerRecordRequest {
+  int64 id = 1;
+}
+
+message DeleteLedgerRecordResponse {
+  int64 code = 1;
+  string message = 2;
+}
+
+message LedgerRecordListRequest {
+  int64 page = 1;
+  int64 page_size = 2;
+  int64 category_id = 3;
+  int64 type = 4;
+  string start_date = 5;
+  string end_date = 6;
+  string keyword = 7;
+}
+
+message LedgerRecordListData {
+  repeated LedgerRecord list = 1;
+  int64 total = 2;
+  int64 page = 3;
+  int64 page_size = 4;
+}
+
+message LedgerRecordListResponse {
+  int64 code = 1;
+  string message = 2;
+  LedgerRecordListData data = 3;
+}
+
+message LedgerRecordDetailRequest {
+  int64 id = 1;
+}
+
+// 分类相关请求响应
+message CreateCategoryRequest {
+  string name = 1;
+  string icon = 2;
+  string color = 3;
+  int64 type = 4;
+  int64 sort_order = 5;
+}
+
+message CreateCategoryResponse {
+  int64 code = 1;
+  string message = 2;
+  LedgerCategory data = 3;
+}
+
+message UpdateCategoryRequest {
+  int64 id = 1;
+  string name = 2;
+  string icon = 3;
+  string color = 4;
+  int64 type = 5;
+  int64 sort_order = 6;
+  int64 status = 7;
+}
+
+message UpdateCategoryResponse {
+  int64 code = 1;
+  string message = 2;
+  LedgerCategory data = 3;
+}
+
+message DeleteCategoryRequest {
+  int64 id = 1;
+}
+
+message DeleteCategoryResponse {
+  int64 code = 1;
+  string message = 2;
+}
+
+message CategoryListResponse {
+  int64 code = 1;
+  string message = 2;
+  repeated LedgerCategory data = 3;
+}
+
+// 子分类相关请求响应
+message CreateSubCategoryRequest {
+  int64 category_id = 1;
+  string name = 2;
+  string icon = 3;
+  string color = 4;
+  int64 sort_order = 5;
+}
+
+message CreateSubCategoryResponse {
+  int64 code = 1;
+  string message = 2;
+  LedgerSubCategory data = 3;
+}
+
+message UpdateSubCategoryRequest {
+  int64 id = 1;
+  int64 category_id = 2;
+  string name = 3;
+  string icon = 4;
+  string color = 5;
+  int64 sort_order = 6;
+  int64 status = 7;
+}
+
+message UpdateSubCategoryResponse {
+  int64 code = 1;
+  string message = 2;
+  LedgerSubCategory data = 3;
+}
+
+message DeleteSubCategoryRequest {
+  int64 id = 1;
+}
+
+message DeleteSubCategoryResponse {
+  int64 code = 1;
+  string message = 2;
+}
+
+message SubCategoryListRequest {
+  int64 category_id = 1;
+}
+
+message SubCategoryListResponse {
+  int64 code = 1;
+  string message = 2;
+  repeated LedgerSubCategory data = 3;
+}
+
+// 统计相关
+message LedgerStatisticsRequest {
+  string start_date = 1;
+  string end_date = 2;
+  int64 type = 3;
+}
+
+message CategoryStatistics {
+  int64 category_id = 1;
+  string category_name = 2;
+  double amount = 3;
+  double percentage = 4;
+}
+
+message LedgerStatisticsData {
+  double total_income = 1;
+  double total_expense = 2;
+  double balance = 3;
+  repeated CategoryStatistics category_stats = 4;
+}
+
+message LedgerStatisticsResponse {
+  int64 code = 1;
+  string message = 2;
+  LedgerStatisticsData data = 3;
+}
+
+// 记账服务定义
+service LedgerService {
+  // 记账记录操作
+  rpc CreateLedgerRecord(CreateLedgerRecordRequest) returns (CreateLedgerRecordResponse);
+  rpc UpdateLedgerRecord(UpdateLedgerRecordRequest) returns (UpdateLedgerRecordResponse);
+  rpc DeleteLedgerRecord(DeleteLedgerRecordRequest) returns (DeleteLedgerRecordResponse);
+  rpc GetLedgerRecordList(LedgerRecordListRequest) returns (LedgerRecordListResponse);
+  rpc GetLedgerRecordDetail(LedgerRecordDetailRequest) returns (CreateLedgerRecordResponse);
+
+  // 分类操作
+  rpc CreateCategory(CreateCategoryRequest) returns (CreateCategoryResponse);
+  rpc UpdateCategory(UpdateCategoryRequest) returns (UpdateCategoryResponse);
+  rpc DeleteCategory(DeleteCategoryRequest) returns (DeleteCategoryResponse);
+  rpc GetCategoryList(google.protobuf.Empty) returns (CategoryListResponse);
+
+  // 子分类操作
+  rpc CreateSubCategory(CreateSubCategoryRequest) returns (CreateSubCategoryResponse);
+  rpc UpdateSubCategory(UpdateSubCategoryRequest) returns (UpdateSubCategoryResponse);
+  rpc DeleteSubCategory(DeleteSubCategoryRequest) returns (DeleteSubCategoryResponse);
+  rpc GetSubCategoryList(SubCategoryListRequest) returns (SubCategoryListResponse);
+
+  // 统计操作
+  rpc GetLedgerStatistics(LedgerStatisticsRequest) returns (LedgerStatisticsResponse);
+}
