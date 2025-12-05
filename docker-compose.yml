@@ -24,6 +24,31 @@ services:
     networks:
       - xledger_network
 
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.12
+    container_name: xledger_etcd
+    ports:
+      - "2379:2379"  # Client port
+      - "2380:2380"  # Peer port
+    environment:
+      - ETCD_NAME=etcd0
+      - ETCD_ADVERTISE_CLIENT_URLS=http://0.0.0.0:2379
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+      - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_INITIAL_CLUSTER=etcd0=http://0.0.0.0:2380
+      - ETCD_INITIAL_CLUSTER_STATE=new
+      - ETCD_INITIAL_CLUSTER_TOKEN=etcd-cluster
+    volumes:
+      - ./persistent/etcd_data:/etcd-data
+    networks:
+      - xledger_network
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # user-api:
   #   build:
   #     context: .
@@ -49,6 +74,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  etcd_data:
 
 networks:
   xledger_network:

@@ -25,11 +25,11 @@ proto-rpc:
 	@if [ -z "$(TABLE)" ] ; then \
 		exit 1; \
 	fi
-	goctl rpc protoc service/$(TABLE)/rpc/$(TABLE).proto --go_out=service/$(TABLE)/rpc --go-grpc_out=service/$(TABLE)/rpc --zrpc_out=service/$(TABLE)/rpc
+	goctl rpc protoc service/$(TABLE)/rpc/$(TABLE).proto --style=goZero --go_out=service/$(TABLE)/rpc --go-grpc_out=service/$(TABLE)/rpc --zrpc_out=service/$(TABLE)/rpc
 
 # 构建单个API代码
 proto-api:
 	@if [ -z "$(TABLE)" ] ; then \
 		exit 1; \
 	fi
-	goctl api go -api service/$(TABLE)/api/$(TABLE).api -dir service/$(TABLE)/api
+	goctl api go -api service/$(TABLE)/api/$(TABLE).api --style=goZero -dir service/$(TABLE)/api

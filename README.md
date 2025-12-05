@@ -4,313 +4,424 @@
 [![Go-Zero](https://img.shields.io/badge/Go--Zero-1.7+-7C3AED?style=flat)](https://go-zero.dev)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-336791?style=flat&logo=postgresql)](https://www.postgresql.org)
 [![Redis](https://img.shields.io/badge/Redis-7+-DC382D?style=flat&logo=redis)](https://redis.io)
-[![Claude AI](https://img.shields.io/badge/Claude-AI-9333EA?style=flat)](https://www.anthropic.com)
+[![ory/fosite](https://img.shields.io/badge/ory-fosite-5528FF?style=flat)](https://github.com/ory/fosite)
 
-基于 Go-Zero 框架构建的企业级微服务记账系统。
+基于 Go-Zero 框架构建的企业级微服务记账系统，专注于个人财务管理和资产规划。
 
 ## 🌟 项目特点
 
-- ✅ **微服务架构**: 标准 Go-Zero 微服务设计，服务独立部署
-- 🔐 **完整认证体系**: OAuth2.0/OIDC + JWT 双重认证
-- 🤖 **AI 智能分析**: 集成 Claude API 提供智能账单分类和财务分析
-- 📊 **数据分析**: 完整的收支统计和类目分析功能
-- 🚀 **高性能**: 支持 500+ QPS，响应时间 < 50ms
-- 🛡️ **安全可靠**: 多层安全防护，数据隔离，XSS 防护
-- 📦 **容器化部署**: Docker + Docker Compose 一键启动
-- 📝 **完整文档**: API 文档、部署文档、开发文档齐全
+- 📊 **完整记账功能**: 支持收入/支出记录，多维度分类管理
+- 📈 **财务报表**: 日报/周报/月报，可视化收支趋势分析
+- 💰 **资产规划**: 资产总览、预算管理、财务目标追踪
+- 🔐 **企业级认证**: 基于 ory/fosite 的 OAuth2.0/OIDC 认证体系
+- 🚀 **微服务架构**: Go-Zero 标准微服务设计，服务独立部署扩展
+- 🤖 **AI 增强**: 可选 AI 功能（智能总结、消费洞察）
+- 🛡️ **安全可靠**: 多层安全防护，数据隔离，完整审计日志
+- 📦 **容器化部署**: Docker Compose 一键启动
+
+## 📐 系统架构
+
+### 技术栈
+
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| **Go** | 1.21+ | 编程语言 |
+| **Go-Zero** | 1.7+ | 微服务框架 |
+| **PostgreSQL** | 15+ | 主数据库 |
+| **Redis** | 7+ | 缓存/会话存储 |
+| **ory/fosite** | latest | OAuth2.0/OIDC 认证 |
+| **GORM** | v2+ | ORM 框架 |
+| **Docker** | latest | 容器化部署 |
+
+### 微服务架构
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                     API Gateway                         │
+│                  (Go-Zero Gateway)                      │
+└────────────┬────────────┬────────────┬──────────────────┘
+             │            │            │
+     ┌───────▼──────┐ ┌──▼─────────┐ ┌▼────────────────┐
+     │ User Service │ │   Ledger   │ │ Report Service  │
+     │  (ory/fosite)│ │  Service   │ │                 │
+     └──────┬───────┘ └──┬─────────┘ └─┬───────────────┘
+            │            │              │
+     ┌──────▼────────────▼──────────────▼────────┐
+     │           PostgreSQL + Redis              │
+     └───────────────────────────────────────────┘
+```
 
 ## 📁 项目结构
 
 ```
 xledger-zero/
-├── app/                        # 应用服务目录
-│   ├── user/                   # 用户服务 (认证、用户管理)
-│   │   ├── cmd/api/           # HTTP API 服务
+├── service/                    # 微服务目录
+│   ├── user/                   # 用户服务
+│   │   ├── api/               # HTTP API 层
 │   │   │   ├── etc/           # 配置文件
-│   │   │   ├── internal/      # 内部代码
+│   │   │   ├── internal/      # 内部实现
 │   │   │   │   ├── config/    # 配置结构
 │   │   │   │   ├── handler/   # HTTP 处理器
 │   │   │   │   ├── logic/     # 业务逻辑
 │   │   │   │   ├── svc/       # 服务上下文
 │   │   │   │   └── types/     # 类型定义
-│   │   │   ├── desc/          # API 定义文件
-│   │   │   └── user.go        # 主程序
-│   │   ├── cmd/rpc/           # gRPC 服务
+│   │   │   └── user.api       # API 定义
+│   │   ├── rpc/               # gRPC 服务
+│   │   │   ├── etc/
+│   │   │   ├── internal/
+│   │   │   ├── pb/            # Protobuf 文件
+│   │   │   └── user.proto
 │   │   └── model/             # 数据模型
-│   ├── bill/                   # 账单服务
-│   ├── category/               # 类目服务
-│   └── ai/                     # AI 服务 ⭐ 新增
-│       ├── cmd/api/
-│       │   ├── etc/ai.yaml    # AI 服务配置
-│       │   ├── internal/
-│       │   │   ├── logic/ai/  # AI 核心逻辑
-│       │   │   │   ├── analyzelogic.go    # 账单分析
-│       │   │   │   └── chatlogic.go       # AI 聊天
-│       │   │   └── svc/       # ServiceContext
-│       │   └── ai.go          # 主程序
+│   ├── ledger/                # 账本服务
+│   │   ├── api/
+│   │   ├── rpc/
+│   │   └── model/
+│   ├── report/                # 报表服务
+│   │   ├── api/
+│   │   └── model/
+│   └── category/              # 分类服务
+│       ├── api/
 │       └── model/
-├── model/                      # 共享数据模型
-├── pkg/                        # 共享工具包
-│   ├── utils/                 # 工具函数
-│   └── middleware/            # 中间件
-├── data/                       # 数据相关
-│   └── sql/                   # 数据库脚本
-├── deploy/                     # 部署相关
-│   ├── Dockerfile
-│   └── docker-compose.yml
-├── doc/                        # 文档
-└── README.md
+├── model/                     # 数据库模型（SQL 迁移）
+├── pkg/                       # 共享工具库
+│   ├── oauth/                # OAuth2 工具
+│   ├── utils/                # 通用工具
+│   └── middleware/           # 中间件
+├── deploy/                    # 部署配置
+│   ├── docker/
+│   │   ├── Dockerfile
+│   │   └── docker-compose.yml
+│   └── k8s/                  # Kubernetes 配置
+├── scripts/                   # 脚本工具
+└── doc/                       # 文档
 ```
 
 ## 🚀 快速开始
 
-### 1. 环境要求
+### 环境要求
 
 - Go 1.21+
 - Docker & Docker Compose
 - PostgreSQL 15+
 - Redis 7+
 
-### 2. 克隆项目
+### 本地开发
 
 ```bash
+# 1. 克隆项目
 git clone https://github.com/your-username/xledger-zero.git
 cd xledger-zero
-```
 
-### 3. 配置环境变量
-
-```bash
-# 创建 .env 文件
-cat > .env << EOF
-# Anthropic AI 配置
-export ANTHROPIC_AUTH_TOKEN="your-auth-token"
-export ANTHROPIC_BASE_URL="https://www.88code.org/api"
-export ANTHROPIC_API_KEY="your-api-key"
-EOF
-
-# 加载环境变量
-source .env
-```
-
-### 4. 启动数据库服务
-
-```bash
+# 2. 启动基础服务
 docker-compose up -d postgres redis
+
+# 3. 初始化数据库
+make migrate-up
+
+# 4. 启动微服务
+make run-user    # 用户服务: http://localhost:8001
+make run-ledger  # 账本服务: http://localhost:8002
+make run-report  # 报表服务: http://localhost:8003
+
+# 或一键启动所有服务
+make run-all
 ```
 
-### 5. 初始化数据库
+### Docker 部署
 
 ```bash
-# 执行数据库迁移脚本
-psql -h localhost -U xledger -d xledger -f data/sql/001_init.sql
+# 构建并启动所有服务
+docker-compose up -d
+
+# 查看服务状态
+docker-compose ps
+
+# 查看日志
+docker-compose logs -f user-service
 ```
 
-### 6. 启动微服务
+## 📊 核心功能
+
+### 1. 用户认证 (ory/fosite)
+
+基于 ory/fosite 的企业级 OAuth2.0/OIDC 认证：
 
 ```bash
-# 使用启动脚本（推荐）
-chmod +x start-services.sh
-./start-services.sh start
-
-# 或者手动启动每个服务
-cd app/user/cmd/api && go run user.go -f etc/user.yaml &
-cd app/bill/cmd/api && go run bill.go -f etc/bill.yaml &
-cd app/category/cmd/api && go run category.go -f etc/category.yaml &
-cd app/ai/cmd/api && go run ai.go -f etc/ai.yaml &
-```
-
-### 7. 查看服务状态
-
-```bash
-./start-services.sh status
-
-# 或查看日志
-./start-services.sh logs ai
-```
-
-## 📊 服务列表
-
-| 服务 | 端口 | 功能 | 状态 |
-|------|------|------|------|
-| **User Service** | 8001 | 用户认证、OAuth2.0/OIDC | ✅ |
-| **Bill Service** | 8002 | 账单管理、统计分析 | ✅ |
-| **Category Service** | 8003 | 类目和子类目管理 | ✅ |
-| **AI Service** | 8004 | 智能分析、聊天助手 | ⭐ 新增 |
-
-## 🤖 AI 服务功能
-
-### 1. 智能账单分析
-
-自动分析账单描述和金额，推荐合适的类目和子类目：
-
-```bash
-POST /api/ai/analyze-bill
-{
-  "description": "在星巴克喝咖啡",
-  "amount": 38.5
-}
-
-# 响应
-{
-  "code": 200,
-  "message": "分析成功",
-  "data": {
-    "suggested_category": "餐饮",
-    "suggested_sub_category": "咖啡",
-    "confidence": 0.95,
-    "reasoning": "根据描述'星巴克'和金额，这笔消费属于餐饮类目下的咖啡消费",
-    "tags": ["星巴克", "咖啡", "饮品"],
-    "notes": "建议创建咖啡专属子类目以便更好地追踪相关支出"
-  }
-}
-```
-
-### 2. AI 聊天助手
-
-与 AI 助手对话，获取财务建议和帮助：
-
-```bash
-POST /api/ai/chat
-{
-  "message": "我这个月餐饮支出有点高，有什么建议吗？"
-}
-
-# 响应
-{
-  "code": 200,
-  "message": "成功",
-  "data": {
-    "reply": "根据您的消费记录，以下是一些建议：\n1. 尝试在家做饭，可以节省40-50%的餐饮支出\n2. 减少外卖频率，每周控制在3次以内\n3. 选择性价比更高的餐厅\n4. 利用优惠券和团购...",
-    "timestamp": "2025-10-10T22:00:00Z",
-    "tokens": 245
-  }
-}
-```
-
-### 3. 财务分析
-
-AI 分析您的财务数据，提供深度见解。
-
-## 🔐 API 认证
-
-所有业务 API 需要携带 JWT 令牌：
-
-```bash
-# 1. 注册
-POST /api/auth/register
+# 注册
+POST /api/v1/auth/register
 {
   "username": "testuser",
   "email": "test@example.com",
-  "password": "password123"
+  "password": "SecurePass123!"
 }
 
-# 2. 登录获取令牌
-POST /api/auth/login
+# 登录获取 Access Token
+POST /api/v1/auth/login
 {
-  "username": "testuser",
-  "password": "password123"
+  "email": "test@example.com",
+  "password": "SecurePass123!"
 }
 
 # 响应
 {
   "access_token": "eyJhbGci...",
   "refresh_token": "eyJhbGci...",
-  "expires_in": 7200
+  "expires_in": 3600,
+  "token_type": "Bearer"
 }
-
-# 3. 使用令牌调用 API
-curl -H "Authorization: Bearer eyJhbGci..." \
-     http://localhost:8004/api/ai/chat \
-     -d '{"message": "你好"}'
 ```
 
-## 📝 API 文档
+### 2. 账本管理
 
-详细的 API 文档请参考 CLAUDE.md 文件。
+记录和管理日常收支：
+
+```bash
+# 创建交易记录
+POST /api/v1/transactions
+Authorization: Bearer {access_token}
+{
+  "type": "expense",           # expense | income
+  "amount": 128.50,
+  "category_id": "uuid",
+  "description": "午餐",
+  "date": "2025-12-05"
+}
+
+# 查询交易记录
+GET /api/v1/transactions?start_date=2025-12-01&end_date=2025-12-31
+
+# 响应
+{
+  "code": 200,
+  "data": {
+    "transactions": [...],
+    "total": 50,
+    "page": 1
+  }
+}
+```
+
+### 3. 财务报表
+
+查看日/周/月财务报表：
+
+```bash
+# 月度报表
+GET /api/v1/reports/monthly?year=2025&month=12
+Authorization: Bearer {access_token}
+
+# 响应
+{
+  "code": 200,
+  "data": {
+    "period": "2025-12",
+    "total_income": 15000.00,
+    "total_expense": 8524.50,
+    "balance": 6475.50,
+    "expense_by_category": [
+      {"category": "餐饮", "amount": 2450.00, "percentage": 28.7},
+      {"category": "交通", "amount": 1200.00, "percentage": 14.1}
+    ],
+    "daily_trend": [...]
+  }
+}
+
+# 周报表
+GET /api/v1/reports/weekly?year=2025&week=49
+
+# 日报表
+GET /api/v1/reports/daily?date=2025-12-05
+```
+
+### 4. 资产规划
+
+```bash
+# 查看资产总览
+GET /api/v1/assets/overview
+Authorization: Bearer {access_token}
+
+# 响应
+{
+  "code": 200,
+  "data": {
+    "total_assets": 125000.00,
+    "net_worth": 98000.00,
+    "monthly_income_avg": 15000.00,
+    "monthly_expense_avg": 8500.00,
+    "savings_rate": 43.3
+  }
+}
+
+# 设置预算
+POST /api/v1/budgets
+{
+  "category_id": "uuid",
+  "amount": 3000.00,
+  "period": "monthly"
+}
+```
+
+### 5. 分类管理
+
+```bash
+# 创建分类
+POST /api/v1/categories
+{
+  "name": "餐饮",
+  "type": "expense",
+  "icon": "🍔"
+}
+
+# 创建子分类
+POST /api/v1/categories/{id}/subcategories
+{
+  "name": "早餐"
+}
+```
+
+## 🔐 认证与授权
+
+### OAuth2.0 流程 (ory/fosite)
+
+支持标准 OAuth2.0 授权流程：
+
+- **Authorization Code Flow**: Web 应用
+- **Client Credentials Flow**: 服务间调用
+- **Refresh Token Flow**: Token 刷新
+
+### JWT Token 验证
+
+所有受保护的 API 需要携带有效的 JWT Token：
+
+```bash
+curl -H "Authorization: Bearer {access_token}" \
+     http://localhost:8002/api/v1/transactions
+```
+
+## 🤖 AI 增强功能 (可选)
+
+系统支持可选的 AI 功能增强：
+
+- **智能总结**: 自动生成月度/年度财务总结
+- **消费洞察**: AI 分析消费习惯，提供优化建议
+- **预测分析**: 基于历史数据预测未来支出
+- **异常检测**: 识别异常消费模式
 
 ## 🛠️ 开发指南
 
-### 添加新的 API 端点
+### 添加新服务
 
-1. 修改 `desc/*.api` 文件添加新的 API 定义
-2. 重新生成代码：`goctl api go -api desc/service.api -dir .`
-3. 实现 Logic 层业务逻辑
-4. 测试 API
-
-### 调用 Claude API
-
-在 AI 服务中，已经封装了 Claude API 调用方法：
-
-```go
-// 在 Logic 中调用 Claude API
-analyzeLogic := ai.NewAnalyzeBillLogic(ctx, svcCtx)
-response, err := analyzeLogic.callClaudeAPI("你的提示词")
+```bash
+# 使用 goctl 创建新服务
+goctl api new service-name
+goctl rpc new service-name
 ```
 
-### 环境配置
+### 数据库迁移
 
-AI 服务的配置文件 `app/ai/cmd/api/etc/ai.yaml`:
+```bash
+# 创建新迁移
+make migrate-create name=add_users_table
 
-```yaml
-Anthropic:
-  AuthToken: ${ANTHROPIC_AUTH_TOKEN}
-  BaseURL: ${ANTHROPIC_BASE_URL}
-  APIKey: ${ANTHROPIC_API_KEY}
-  Model: claude-3-5-sonnet-20241022
-  MaxTokens: 4096
+# 执行迁移
+make migrate-up
+
+# 回滚迁移
+make migrate-down
+```
+
+### 代码生成
+
+```bash
+# 从 .api 文件生成代码
+goctl api go -api service.api -dir .
+
+# 从 .proto 文件生成代码
+goctl rpc protoc service.proto --go_out=. --go-grpc_out=. --zrpc_out=.
 ```
 
 ## 🧪 测试
 
 ```bash
 # 运行单元测试
-go test ./...
+make test
 
 # 运行集成测试
-./scripts/test-api.sh
+make test-integration
 
-# AI 服务测试
-./scripts/test-ai.sh
+# 代码覆盖率
+make coverage
 ```
 
 ## 📦 部署
 
-### Docker 部署
+### 环境变量
 
 ```bash
-# 构建镜像
-docker-compose build
+# .env 文件
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=xledger
+DB_PASSWORD=your_password
+DB_NAME=xledger
 
-# 启动所有服务
-docker-compose up -d
+REDIS_HOST=localhost
+REDIS_PORT=6379
 
-# 查看日志
-docker-compose logs -f ai-service
+JWT_SECRET=your_jwt_secret
+OAUTH_CLIENT_ID=your_client_id
+OAUTH_CLIENT_SECRET=your_client_secret
 ```
 
-## 🔒 安全注意事项
+### 生产部署
 
-1. **API Key 安全**: 不要将 `ANTHROPIC_AUTH_TOKEN` 提交到代码库
-2. **JWT 密钥**: 生产环境使用强随机密钥
-3. **HTTPS**: 生产环境必须启用 HTTPS
-4. **数据隔离**: 每个用户只能访问自己的数据
-5. **输入验证**: 所有用户输入都经过严格验证
+```bash
+# Docker 生产环境
+docker-compose -f docker-compose.prod.yml up -d
+
+# Kubernetes
+kubectl apply -f deploy/k8s/
+```
 
 ## 📈 性能指标
 
-- **API 响应时间**: 平均 < 50ms，P99 < 200ms
-- **并发能力**: 500+ QPS (单实例)
-- **AI 响应时间**: 2-5 秒 (取决于 Claude API)
-- **内存占用**: < 256MB (每个服务)
+- **API 响应时间**: P99 < 100ms
+- **并发能力**: 1000+ QPS (单实例)
+- **数据库连接池**: 20-50 连接
+- **缓存命中率**: > 80%
+
+## 🔒 安全最佳实践
+
+1. **密码加密**: bcrypt 哈希存储
+2. **Token 安全**: JWT 短期有效期 + Refresh Token
+3. **SQL 注入防护**: 使用参数化查询 (GORM)
+4. **XSS 防护**: 输入验证和输出编码
+5. **HTTPS**: 生产环境强制 HTTPS
+6. **审计日志**: 记录所有敏感操作
+
+## 📝 API 文档
+
+完整的 API 文档请访问：
+
+- **Swagger UI**: http://localhost:8001/swagger
+- **API 文档**: [doc/api.md](doc/api.md)
+
+## 🤝 贡献指南
+
+欢迎贡献代码！请阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 了解详情。
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
 
 ## 📧 联系方式
 
 - 作者: xan
 - Email: xan@example.com
+- 项目主页: https://github.com/your-username/xledger-zero
 
 ---
 
-**最后更新**: 2025-10-10
-**版本**: v2.0.0
-**状态**: 生产就绪 + AI 功能增强 🤖
+**最后更新**: 2025-12-05  
+**版本**: v1.0.0  
+**状态**: 开发中 🚧

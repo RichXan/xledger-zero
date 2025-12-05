@@ -3,35 +3,32 @@ syntax = "proto3";
 package user;
 option go_package = "./user";
 
-// 用户信息
+// User information
 message User {
   string id = 1;
   string username = 2;
   string email = 3;
-  string password = 4;
-  string gender = 5;
-  string avatar = 6;
-  string status = 7;
-  string created_at = 8;
-  string updated_at = 9;
-}
-
-// 添加用户请求
-message AddUserRequest {
-  string username = 1;
-  string email = 2;
-  string password = 3;
   string gender = 4;
   string avatar = 5;
   string status = 6;
+  string created_at = 7;
+  string updated_at = 8;
 }
-message AddUserResponse {
+
+// Register
+message RegisterRequest {
+  string username = 1;
+  string email = 2;
+  string password = 3;
+}
+
+message RegisterResponse {
   int64 code = 1;
   string message = 2;
   User data = 3;
 }
 
-// 用户登录请求
+// Login
 message LoginRequest {
   string email = 1;
   string password = 2;
@@ -51,34 +48,67 @@ message LoginResponse {
   LoginData data = 3;
 }
 
-// 获取用户信息请求
-message GetUserRequest {
+// Logout
+message LogoutRequest {
+  string access_token = 1;
+}
+
+message LogoutResponse {
+  int64 code = 1;
+  string message = 2;
+}
+
+// User Info
+message UserInfoRequest {
   string id = 1;
 }
 
-message GetUserResponse {
+message UserInfoResponse {
   int64 code = 1;
   string message = 2;
   User data = 3;
 }
 
-// 更新用户信息请求
-message UpdateUserRequest {
+// Change Password
+message ChangePasswordRequest {
+  string id = 1;
+  string old_password = 2;
+  string new_password = 3;
+}
+
+message ChangePasswordResponse {
+  int64 code = 1;
+  string message = 2;
+}
+
+// Change Email
+message ChangeEmailRequest {
+  string id = 1;
+  string new_email = 2;
+  string password = 3; // Verify password for security
+  string code = 4; // Optional verification code
+}
+
+message ChangeEmailResponse {
+  int64 code = 1;
+  string message = 2;
+}
+
+// Update Profile
+message UpdateProfileRequest {
   string id = 1;
   string username = 2;
-  string email = 3;
-  string gender = 4;
-  string avatar = 5;
-  string status = 6;
+  string gender = 3;
+  string avatar = 4;
 }
 
-message UpdateUserResponse {
+message UpdateProfileResponse {
   int64 code = 1;
   string message = 2;
   User data = 3;
 }
 
-// 删除用户请求
+// Delete User
 message DeleteUserRequest {
   string id = 1;
 }
@@ -88,33 +118,21 @@ message DeleteUserResponse {
   string message = 2;
 }
 
-// 用户列表请求
-message ListUserRequest {
-  int64 page = 1;
-  int64 page_size = 2;
-  string username = 3;
-  string email = 4;
-  string status = 5;
-}
-
-message ListUserData {
-  repeated User list = 1;
-  int64 total = 2;
-  int64 page = 3;
-  int64 page_size = 4;
-}
-
-message ListUserResponse {
-  int64 code = 1;
-  string message = 2;
-  ListUserData data = 3;
-}
-
-// 用户服务定义
+// User Service
 service UserService {
-  rpc AddUser(AddUserRequest) returns (AddUserResponse);
-  rpc GetUser(GetUserRequest) returns (GetUserResponse);
-  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+  // Basic Auth
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+
+  // User Info
+  rpc UserInfo(UserInfoRequest) returns (UserInfoResponse);
+
+  // Updates
+  rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse);
+  rpc ChangeEmail(ChangeEmailRequest) returns (ChangeEmailResponse);
+  rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse);
+
+  // Account Management
   rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
-  rpc ListUsers(ListUserRequest) returns (ListUserResponse);
 }

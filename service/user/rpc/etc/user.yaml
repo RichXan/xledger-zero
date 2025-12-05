@@ -1,0 +1,13 @@
+Name: user.rpc
+ListenOn: 0.0.0.0:8801
+Etcd:
+  Hosts:
+  - 127.0.0.1:2379
+  Key: user.rpc
+
+DataSource: postgres://xledger:password@localhost:5432/xledger?sslmode=disable
+
+CacheRedis:
+  - Host: localhost:6379
+    Pass: ""
+    Type: node
