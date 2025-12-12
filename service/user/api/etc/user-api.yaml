@@ -1,0 +1,17 @@
+Name: user-api
+Host: 0.0.0.0
+Port: 8101
+
+# JWT 配置
+# 建议：使用环境变量 JWT_SECRET 统一管理，避免在 API 和 RPC 两处维护
+# 例如：AccessSecret: ${JWT_SECRET:xledger-secret-key-change-in-production}
+Auth:
+  AccessSecret: xledger-secret-key-change-in-production # 必须与 RPC 的 JwtSecret 完全相同
+  AccessExpire: 7200 # 2 hours，与 RPC 的 JwtAccessExpire 保持一致
+
+# 用户 RPC 服务配置
+UserRpc:
+  Etcd:
+    Hosts:
+      - localhost:2379
+    Key: user.rpc
