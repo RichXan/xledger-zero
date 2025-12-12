@@ -15,5 +15,4 @@
 
 执行生成带缓存的model文件： `goctl model pg datasource -url="postgresql://admin:xledger123@localhost:15432/xledger" -table="user" -dir="./service/user/model" -cache=true`
 
-
 简单可以执行 `make model-table TABLE=user` 来生成 user 表的 model

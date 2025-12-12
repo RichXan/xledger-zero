@@ -1,13 +1,22 @@
 Name: user.rpc
-ListenOn: 0.0.0.0:8801
+ListenOn: 0.0.0.0:8201
+
+# etcd 配置（用于服务注册发现）
 Etcd:
   Hosts:
-  - 127.0.0.1:2379
+    - localhost:2379
   Key: user.rpc
 
-DataSource: postgres://xledger:password@localhost:5432/xledger?sslmode=disable
+# PostgreSQL 数据库配置
+DataSource: postgres://admin:123456@localhost:15432/xledger?sslmode=disable
 
+# Redis 缓存配置 (cache.CacheConf 格式)
 CacheRedis:
-  - Host: localhost:6379
-    Pass: ""
+  - Host: localhost:16379
+    Pass: redis123
     Type: node
+
+# JWT 配置
+JwtSecret: xledger-secret-key-change-in-production
+JwtAccessExpire: 7200 # 2 hours
+JwtRefreshExpire: 604800 # 7 days

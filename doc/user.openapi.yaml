@@ -1,0 +1,481 @@
+openapi: 3.0.3
+info:
+  title: XLedger User API
+  description: 用户服务 REST API 文档
+  version: 1.0.0
+  contact:
+    name: xan
+    email: xan@xanny.cloud
+
+servers:
+  - url: http://localhost:8888
+    description: 本地开发环境
+  - url: https://api.xledger.com
+    description: 生产环境
+
+tags:
+  - name: 认证
+    description: 用户注册、登录、登出
+  - name: 用户管理
+    description: 用户信息查询、更新、删除
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Token 认证（从登录接口获取）
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 用户 ID (UUID)
+        username:
+          type: string
+          description: 用户名
+        email:
+          type: string
+          format: email
+          description: 邮箱
+        gender:
+          type: string
+          description: 性别
+          enum: [male, female, other]
+        avatar:
+          type: string
+          description: 头像 URL
+        status:
+          type: string
+          description: 用户状态
+          enum: [active, inactive, suspended]
+        created_at:
+          type: string
+          format: date-time
+          description: 创建时间
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新时间
+
+    RegisterRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 2
+          maxLength: 50
+          description: 用户名
+        email:
+          type: string
+          format: email
+          description: 邮箱
+        password:
+          type: string
+          minLength: 6
+          maxLength: 128
+          description: 密码
+
+    RegisterResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码
+        message:
+          type: string
+          description: 提示信息
+        data:
+          $ref: "#/components/schemas/User"
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    LoginData:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        access_token:
+          type: string
+          description: 访问令牌
+        refresh_token:
+          type: string
+          description: 刷新令牌
+        expires_in:
+          type: integer
+          description: 过期时间（秒）
+        token_type:
+          type: string
+          description: Token 类型
+          default: Bearer
+
+    LoginResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/LoginData"
+
+    LogoutRequest:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: 从 Authorization header 自动提取
+
+    LogoutResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+
+    UserInfoResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/User"
+
+    ChangePasswordRequest:
+      type: object
+      required:
+        - old_password
+        - new_password
+      properties:
+        old_password:
+          type: string
+          description: 旧密码
+        new_password:
+          type: string
+          minLength: 6
+          maxLength: 128
+          description: 新密码
+
+    ChangePasswordResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+
+    ChangeEmailRequest:
+      type: object
+      required:
+        - new_email
+        - password
+      properties:
+        new_email:
+          type: string
+          format: email
+          description: 新邮箱
+        password:
+          type: string
+          description: 当前密码（用于验证）
+        code:
+          type: string
+          description: 验证码（可选）
+
+    ChangeEmailResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 2
+          maxLength: 50
+        gender:
+          type: string
+          enum: [male, female, other]
+        avatar:
+          type: string
+          description: 头像 URL
+
+    UpdateProfileResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/User"
+
+    DeleteUserResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+
+paths:
+  /api/v1/auth/register:
+    post:
+      tags:
+        - 认证
+      summary: 用户注册
+      description: 注册新用户账号
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+            example:
+              username: "张三"
+              email: "zhangsan@example.com"
+              password: "password123"
+      responses:
+        "200":
+          description: 注册成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterResponse"
+              example:
+                code: 200
+                message: "User registered successfully"
+                data:
+                  id: "550e8400-e29b-41d4-a716-446655440000"
+                  username: "张三"
+                  email: "zhangsan@example.com"
+                  status: "active"
+                  created_at: "2025-12-09T14:00:00Z"
+                  updated_at: "2025-12-09T14:00:00Z"
+
+  /api/v1/auth/login:
+    post:
+      tags:
+        - 认证
+      summary: 用户登录
+      description: 使用邮箱和密码登录
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+            example:
+              email: "zhangsan@example.com"
+              password: "password123"
+      responses:
+        "200":
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+              example:
+                code: 200
+                message: "Login successful"
+                data:
+                  user:
+                    id: "550e8400-e29b-41d4-a716-446655440000"
+                    username: "张三"
+                    email: "zhangsan@example.com"
+                    status: "active"
+                  access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  refresh_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  expires_in: 7200
+                  token_type: "Bearer"
+
+  /api/v1/auth/logout:
+    post:
+      tags:
+        - 认证
+      summary: 用户登出
+      description: 登出并将 token 加入黑名单
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: 登出成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogoutResponse"
+              example:
+                code: 200
+                message: "Logout successful"
+
+  /api/v1/user/{id}:
+    get:
+      tags:
+        - 用户管理
+      summary: 获取用户信息
+      description: 根据用户 ID 获取用户详细信息
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 用户 ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInfoResponse"
+              example:
+                code: 200
+                message: "Success"
+                data:
+                  id: "550e8400-e29b-41d4-a716-446655440000"
+                  username: "张三"
+                  email: "zhangsan@example.com"
+                  status: "active"
+
+    delete:
+      tags:
+        - 用户管理
+      summary: 删除用户
+      description: 删除指定用户（软删除）
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 用户 ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteUserResponse"
+              example:
+                code: 200
+                message: "User deleted successfully"
+
+  /api/v1/user/password:
+    post:
+      tags:
+        - 用户管理
+      summary: 修改密码
+      description: 修改当前用户密码
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+            example:
+              old_password: "oldpassword123"
+              new_password: "newpassword456"
+      responses:
+        "200":
+          description: 修改成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChangePasswordResponse"
+              example:
+                code: 200
+                message: "Password changed successfully"
+
+  /api/v1/user/email:
+    post:
+      tags:
+        - 用户管理
+      summary: 修改邮箱
+      description: 修改当前用户邮箱
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeEmailRequest"
+            example:
+              new_email: "newemail@example.com"
+              password: "password123"
+              code: "123456"
+      responses:
+        "200":
+          description: 修改成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChangeEmailResponse"
+              example:
+                code: 200
+                message: "Email changed successfully"
+
+  /api/v1/user/profile:
+    put:
+      tags:
+        - 用户管理
+      summary: 更新个人资料
+      description: 更新当前用户的个人资料
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileRequest"
+            example:
+              username: "李四"
+              gender: "male"
+              avatar: "https://example.com/avatar.jpg"
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateProfileResponse"
+              example:
+                code: 200
+                message: "Profile updated successfully"
+                data:
+                  id: "550e8400-e29b-41d4-a716-446655440000"
+                  username: "李四"
+                  email: "zhangsan@example.com"
+                  gender: "male"
+                  avatar: "https://example.com/avatar.jpg"
+                  status: "active"

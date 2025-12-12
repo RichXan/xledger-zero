@@ -3,7 +3,7 @@ syntax = "v1"
 info (
 	title:   "用户服务API"
 	author:  "xan"
-	email:   "rich4xan@gmail.com"
+	email:   "xan@xanny.cloud"
 	version: "v1.0"
 )
 
@@ -12,36 +12,28 @@ type User {
 	Id        string `json:"id"`
 	Username  string `json:"username"`
 	Email     string `json:"email"`
-	Password  string `json:"password"`
-	Gender    int8   `json:"gender"`
-	Avatar    string `json:"avatar"`
+	Gender    string `json:"gender,omitempty"`
+	Avatar    string `json:"avatar,omitempty"`
 	Status    string `json:"status"`
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
 }
 
-type Response {
-	Success bool   `json:"success"`
-	Code    int64  `json:"code"`
-	Message string `json:"message"`
-	Data    any    `json:"data"`
-	Total   int64  `json:"total,omitempty"`
-	Current int64  `json:"current,omitempty"`
-	Size    int64  `json:"size,omitempty"`
-}
-
+// ===== 请求和响应类型 =====
 type (
+	// 注册
 	RegisterRequest {
-		Username string `json:"username" validate:"required,min=3,max=50"`
+		Username string `json:"username" validate:"required,min=2,max=50"`
 		Email    string `json:"email" validate:"required,email"`
-		Password string `json:"password" validate:"required,min=6,max=50"`
+		Password string `json:"password" validate:"required,min=6,max=128"`
 	}
 	RegisterResponse {
 		Code    int64  `json:"code"`
 		Message string `json:"message"`
-		Data    User   `json:"data"`
+		Data    User   `json:"data,omitempty"`
 	}
 
+	// 登录
 	LoginRequest {
 		Email    string `json:"email" validate:"required,email"`
 		Password string `json:"password" validate:"required"`
@@ -56,91 +48,115 @@ type (
 	LoginResponse {
 		Code    int64     `json:"code"`
 		Message string    `json:"message"`
-		Data    LoginData `json:"data"`
+		Data    LoginData `json:"data,omitempty"`
 	}
 
-
-	GetUserRequest {
-		Id int64 `path:"id,optional"`
+	// 登出
+	LogoutRequest {
+		AccessToken string `header:"Authorization" validate:"required"`
 	}
-	GetUserResponse {
+	LogoutResponse {
 		Code    int64  `json:"code"`
 		Message string `json:"message"`
-		Data    User   `json:"data"`
 	}
 
-	UpdateUserRequest {
-		Id        int64  `path:"id" validate:"required"`
-		Name      string `json:"name,optional"`
-		Email     string `json:"email,optional" validate:"email"`
-		AvatarUrl string `json:"avatar_url,optional"`
+	// 获取用户信息
+	UserInfoRequest {
+		Id string `path:"id"`
 	}
-	UpdateUserResponse {
+	UserInfoResponse {
 		Code    int64  `json:"code"`
 		Message string `json:"message"`
-		Data    User   `json:"data"`
+		Data    User   `json:"data,omitempty"`
 	}
 
+	// 修改密码
+	ChangePasswordRequest {
+		OldPassword string `json:"old_password" validate:"required"`
+		NewPassword string `json:"new_password" validate:"required,min=6,max=128"`
+	}
+	ChangePasswordResponse {
+		Code    int64  `json:"code"`
+		Message string `json:"message"`
+	}
+
+	// 修改邮箱
+	ChangeEmailRequest {
+		NewEmail string `json:"new_email" validate:"required,email"`
+		Password string `json:"password" validate:"required"`
+		Code     string `json:"code,optional"`
+	}
+	ChangeEmailResponse {
+		Code    int64  `json:"code"`
+		Message string `json:"message"`
+	}
+
+	// 更新个人资料
+	UpdateProfileRequest {
+		Username string `json:"username,optional" validate:"min=2,max=50"`
+		Gender   string `json:"gender,optional"`
+		Avatar   string `json:"avatar,optional"`
+	}
+	UpdateProfileResponse {
+		Code    int64  `json:"code"`
+		Message string `json:"message"`
+		Data    User   `json:"data,omitempty"`
+	}
+
+	// 删除用户
 	DeleteUserRequest {
-		Id int64 `path:"id" validate:"required"`
+		Id string `path:"id"`
 	}
 	DeleteUserResponse {
 		Code    int64  `json:"code"`
 		Message string `json:"message"`
 	}
-	
-	UserListRequest {
-		Page     int64  `form:"page,optional,default=1"`
-		PageSize int64  `form:"page_size,optional,default=20"`
-		Keyword  string `form:"keyword,optional"`
-		Status   int64  `form:"status,optional"`
-	}
-	UserListData {
-		List     []User `json:"list"`
-		Total    int64  `json:"total"`
-		Page     int64  `json:"page"`
-		PageSize int64  `json:"page_size"`
-	}
-	UserListResponse {
-		Code    int64       `json:"code"`
-		Message string      `json:"message"`
-		Data    UserListData `json:"data"`
-	}
-
 )
 
 // ===== API 服务定义 =====
+// 认证相关接口（无需 JWT）
 @server (
 	group: auth
 )
 service user-api {
 	// 用户注册
 	@handler RegisterHandler
-	post /api/auth/register (RegisterRequest) returns (RegisterResponse)
+	post /api/v1/auth/register (RegisterRequest) returns (RegisterResponse)
 
 	// 用户登录
 	@handler LoginHandler
-	post /api/auth/login (LoginRequest) returns (LoginResponse)
+	post /api/v1/auth/login (LoginRequest) returns (LoginResponse)
 }
 
+// 用户相关接口（需要 JWT 认证）
 @server (
 	group:      user
 	jwt:        Auth
+	middleware: JwtAuth
 )
 service user-api {
+	// 用户登出
+	@handler LogoutHandler
+	post /api/v1/auth/logout (LogoutRequest) returns (LogoutResponse)
+
 	// 获取用户信息
 	@handler UserInfoHandler
-	get /api/user/:id (GetUserRequest) returns (GetUserResponse)
+	get /api/v1/user/:id (UserInfoRequest) returns (UserInfoResponse)
 
-	// 更新用户信息
-	@handler UpdateUserHandler
-	put /api/user/:id (UpdateUserRequest) returns (UpdateUserResponse)
+	// 修改密码
+	@handler ChangePasswordHandler
+	post /api/v1/user/password (ChangePasswordRequest) returns (ChangePasswordResponse)
+
+	// 修改邮箱
+	@handler ChangeEmailHandler
+	post /api/v1/user/email (ChangeEmailRequest) returns (ChangeEmailResponse)
+
+	// 更新个人资料
+	@handler UpdateProfileHandler
+	put /api/v1/user/profile (UpdateProfileRequest) returns (UpdateProfileResponse)
 
 	// 删除用户
 	@handler DeleteUserHandler
-	delete /api/user/:id (DeleteUserRequest) returns (DeleteUserResponse)
-
-	// 获取用户列表
-	@handler UserListHandler
-	get /api/users (UserListRequest) returns (UserListResponse)
+	delete /api/v1/user/:id (DeleteUserRequest) returns (DeleteUserResponse)
 }
+

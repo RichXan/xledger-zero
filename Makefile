@@ -10,14 +10,14 @@ model-table:
 		exit 1; \
 	fi
 	@mkdir -p ./service/$(TABLE)/model
-	goctl model pg datasource -url="$(DB_URL)" -table="$(TABLE)" -dir="./service/$(TABLE)/model" -cache=true
+	goctl model pg datasource -url="$(DB_URL)" -table="$(TABLE)" -dir="./service/$(TABLE)/model" -cache=true --style=goZero
 
 # 构建ledger服务相关的model
 model-all:
 	@for table in $(TABLES); do \
 		echo "正在生成表: $$table"; \
 		mkdir -p ./service/$$table/model && \
-		goctl model pg datasource -url="$(DB_URL)" -table="$$table" -dir="./service/$$table/model" -cache=true || true; \
+		goctl model pg datasource -url="$(DB_URL)" -table="$$table" -dir="./service/$$table/model" -cache=true || true --style=goZero; \
 	done
 
 # 构建单个PRC代码
@@ -33,3 +33,9 @@ proto-api:
 		exit 1; \
 	fi
 	goctl api go -api service/$(TABLE)/api/$(TABLE).api --style=goZero -dir service/$(TABLE)/api
+
+up:
+	@docker-compose up -d
+
+down:
+	@docker-compose down
