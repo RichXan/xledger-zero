@@ -1,0 +1,21 @@
+Name: ledger-api
+Host: 0.0.0.0
+Port: 8102
+
+# JWT 配置
+Auth:
+  AccessSecret: ${JWT_SECRET:xledger-secret-key-change-in-production}
+  AccessExpire: 7200
+
+# Redis 配置（用于 Token 黑名单）
+Redis:
+  Host: ${REDIS_HOST:localhost:16379}
+  Pass: ${REDIS_PASSWORD:redis123}
+  DB: 0
+
+# Ledger RPC 服务配置
+LedgerRpc:
+  Etcd:
+    Hosts:
+      - localhost:2379
+    Key: ledger.rpc

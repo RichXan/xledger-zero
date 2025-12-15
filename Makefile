@@ -39,3 +39,69 @@ up:
 
 down:
 	@docker-compose down
+
+# 数据库迁移文件映射
+# 格式: 00001_user.sql, 00002_ledger.sql
+MIGRATE_FILES = $(wildcard model/????_*.sql)
+
+# 数据库迁移 (用法: make migrate TABLE=ledger)
+migrate:
+	@if [ -z "$(TABLE)" ]; then \
+		echo "❌ Error: TABLE parameter required. Usage: make migrate TABLE=ledger"; \
+		exit 1; \
+	fi
+	@MIGRATE_FILE=$$(ls model/*_$(TABLE).sql 2>/dev/null | head -n 1); \
+	if [ -z "$$MIGRATE_FILE" ]; then \
+		echo "❌ Error: Migration file not found for table $(TABLE)"; \
+		exit 1; \
+	fi; \
+	echo "Running migration: $$MIGRATE_FILE"; \
+	docker exec -i xledger_postgres psql -U admin -d xledger < $$MIGRATE_FILE && \
+	echo "✅ Migration completed for $(TABLE)"
+
+# 数据库回滚 (用法: make migrate-down TABLE=ledger)
+migrate-down:
+	@if [ -z "$(TABLE)" ]; then \
+		echo "❌ Error: TABLE parameter required. Usage: make migrate-down TABLE=ledger"; \
+		exit 1; \
+	fi
+	@echo "⚠️  Rolling back $(TABLE) migration..."
+	@if [ "$(TABLE)" = "ledger" ]; then \
+		docker exec -i xledger_postgres psql -U admin -d xledger -c "DROP TABLE IF EXISTS transactions, sub_categories, categories CASCADE;"; \
+	elif [ "$(TABLE)" = "user" ]; then \
+		docker exec -i xledger_postgres psql -U admin -d xledger -c "DROP TABLE IF EXISTS users CASCADE;"; \
+		exit 1; \
+	fi
+	@echo "✅ Migration rolled back for $(TABLE)"
+
+# 服务完整初始化（迁移 + 代码生成）
+# 用法: make service-init TABLE=ledger
+service-init:
+	@if [ -z "$(TABLE)" ]; then \
+		echo "❌ Error: TABLE parameter required. Usage: make service-init TABLE=ledger"; \
+		exit 1; \
+	fi
+	@echo "🚀 Initializing $(TABLE) service..."
+	@$(MAKE) migrate TABLE=$(TABLE)
+	@$(MAKE) proto-rpc TABLE=$(TABLE)
+	@$(MAKE) proto-api TABLE=$(TABLE)
+	@$(MAKE) model-table TABLE=$(TABLE)
+	@echo "✅ $(TABLE) service initialized"
+
+# 启动 RPC 服务
+# 用法: make run-rpc TABLE=ledger
+run-rpc:
+	@if [ -z "$(TABLE)" ]; then \
+		echo "❌ Error: TABLE parameter required. Usage: make run-rpc TABLE=ledger"; \
+		exit 1; \
+	fi
+	@cd service/$(TABLE)/rpc && go run $(TABLE).go
+
+# 启动 API 服务
+# 用法: make run-api TABLE=ledger
+run-api:
+	@if [ -z "$(TABLE)" ]; then \
+		echo "❌ Error: TABLE parameter required. Usage: make run-api TABLE=ledger"; \
+		exit 1; \
+	fi
+	@cd service/$(TABLE)/api && go run $(TABLE).go

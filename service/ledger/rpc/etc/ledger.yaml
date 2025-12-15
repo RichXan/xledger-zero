@@ -1,0 +1,17 @@
+Name: ledger.rpc
+ListenOn: 0.0.0.0:8301
+
+# etcd 配置（用于服务注册发现）
+Etcd:
+  Hosts:
+    - localhost:2379
+  Key: ledger.rpc
+
+# PostgreSQL 数据库配置
+DataSource: postgres://admin:${DB_PASSWORD:123456}@localhost:15432/xledger?sslmode=disable
+
+# Redis 缓存配置
+CacheRedis:
+  - Host: ${REDIS_HOST:localhost:16379}
+    Pass: ${REDIS_PASSWORD:redis123}
+    Type: node

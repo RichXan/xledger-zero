@@ -55,7 +55,6 @@ type LedgerSubCategory {
 }
 
 // ===== 请求响应类型 =====
-
 // 创建记账记录
 type CreateLedgerRecordRequest {
 	CategoryId    int64    `json:"category_id" validate:"required"`
@@ -179,8 +178,8 @@ type CreateSubCategoryRequest {
 }
 
 type SubCategoryResponse {
-	Code    int64              `json:"code"`
-	Message string             `json:"message"`
+	Code    int64             `json:"code"`
+	Message string            `json:"message"`
 	Data    LedgerSubCategory `json:"data"`
 }
 
@@ -206,8 +205,8 @@ type SubCategoryListRequest {
 }
 
 type SubCategoryListResponse {
-	Code    int64                `json:"code"`
-	Message string               `json:"message"`
+	Code    int64               `json:"code"`
+	Message string              `json:"message"`
 	Data    []LedgerSubCategory `json:"data"`
 }
 
@@ -226,15 +225,15 @@ type CategoryStatistics {
 }
 
 type LedgerStatisticsData {
-	TotalIncome   float64            `json:"total_income"`
-	TotalExpense  float64            `json:"total_expense"`
-	Balance       float64            `json:"balance"`
+	TotalIncome   float64              `json:"total_income"`
+	TotalExpense  float64              `json:"total_expense"`
+	Balance       float64              `json:"balance"`
 	CategoryStats []CategoryStatistics `json:"category_stats"`
 }
 
 type LedgerStatisticsResponse {
-	Code    int64                 `json:"code"`
-	Message string                `json:"message"`
+	Code    int64                `json:"code"`
+	Message string               `json:"message"`
 	Data    LedgerStatisticsData `json:"data"`
 }
 
@@ -245,7 +244,6 @@ type CommonResponse {
 }
 
 // ===== API 服务定义 =====
-
 @server (
 	group:      ledger
 	jwt:        Auth
@@ -308,3 +306,4 @@ service ledger-api {
 	@handler LedgerStatisticsHandler
 	get /api/ledger/statistics (LedgerStatisticsRequest) returns (LedgerStatisticsResponse)
 }
+

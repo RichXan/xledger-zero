@@ -168,6 +168,10 @@ message DeleteCategoryResponse {
   string message = 2;
 }
 
+message CategoryListRequest {
+  // 可选的过滤参数，暂时为空
+}
+
 message CategoryListResponse {
   int64 code = 1;
   string message = 2;
@@ -264,7 +268,7 @@ service LedgerService {
   rpc CreateCategory(CreateCategoryRequest) returns (CreateCategoryResponse);
   rpc UpdateCategory(UpdateCategoryRequest) returns (UpdateCategoryResponse);
   rpc DeleteCategory(DeleteCategoryRequest) returns (DeleteCategoryResponse);
-  rpc GetCategoryList(google.protobuf.Empty) returns (CategoryListResponse);
+  rpc GetCategoryList(CategoryListRequest) returns (CategoryListResponse);
 
   // 子分类操作
   rpc CreateSubCategory(CreateSubCategoryRequest) returns (CreateSubCategoryResponse);
