@@ -82,8 +82,8 @@ func (l *LoginLogic) Login(in *user.LoginRequest) (*user.LoginResponse, error) {
 	// 5. 生成 JWT Token
 	now := time.Now()
 	// 从配置读取过期时间
-	accessTokenExpires := l.svcCtx.Config.JwtAccessExpire
-	refreshTokenExpires := l.svcCtx.Config.JwtRefreshExpire
+	accessTokenExpires := l.svcCtx.Config.Auth.AccessExpire
+	refreshTokenExpires := l.svcCtx.Config.Auth.RefreshExpire
 	if accessTokenExpires == 0 {
 		accessTokenExpires = 7200 // 默认 2 hours
 	}
@@ -140,7 +140,7 @@ func (l *LoginLogic) generateToken(userID, email string, iat, exp int64) (string
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	// 从配置读取密钥
-	secret := l.svcCtx.Config.JwtSecret
+	secret := l.svcCtx.Config.Auth.AccessSecret
 	if secret == "" {
 		secret = "xledger-secret-key-change-in-production"
 	}

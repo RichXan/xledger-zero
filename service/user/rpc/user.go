@@ -9,6 +9,7 @@ import (
 	"xledger/service/user/rpc/internal/svc"
 	"xledger/service/user/rpc/user"
 
+	"github.com/joho/godotenv"
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/zrpc"
@@ -20,6 +21,8 @@ var configFile = flag.String("f", "etc/user.yaml", "the config file")
 
 func main() {
 	flag.Parse()
+
+	_ = godotenv.Load()
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)

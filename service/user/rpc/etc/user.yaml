@@ -8,15 +8,16 @@ Etcd:
   Key: user.rpc
 
 # PostgreSQL 数据库配置
-DataSource: postgres://admin:123456@localhost:15432/xledger?sslmode=disable
+DataSource: postgres://admin:${DB_PASSWORD:123456}@localhost:15432/xledger?sslmode=disable
 
 # Redis 缓存配置 (cache.CacheConf 格式)
 CacheRedis:
-  - Host: localhost:16379
-    Pass: redis123
+  - Host: ${REDIS_HOST:localhost:16379}
+    Pass: ${REDIS_PASSWORD:redis123}
     Type: node
 
-# JWT 配置
-JwtSecret: xledger-secret-key-change-in-production
-JwtAccessExpire: 7200 # 2 hours
-JwtRefreshExpire: 604800 # 7 days
+# JWT 配置（从环境变量读取，与 API 保持一致）
+Auth:
+  AccessSecret: ${JWT_SECRET:xledger-secret-key-change-in-production}
+  AccessExpire: ${JWT_ACCESS_EXPIRE:7200}
+  RefreshExpire: ${JWT_REFRESH_EXPIRE:604800}

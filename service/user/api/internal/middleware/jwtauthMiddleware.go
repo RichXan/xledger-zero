@@ -18,9 +18,11 @@ type JwtAuthMiddleware struct {
 	jwtSecret   string
 }
 
-func NewJwtAuthMiddleware() *JwtAuthMiddleware {
-	// TODO: 从配置注入 Redis 和 JWT Secret
-	return &JwtAuthMiddleware{}
+func NewJwtAuthMiddleware(redisClient *redis.Client, jwtSecret string) *JwtAuthMiddleware {
+	return &JwtAuthMiddleware{
+		redisClient: redisClient,
+		jwtSecret:   jwtSecret,
+	}
 }
 
 func (m *JwtAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {

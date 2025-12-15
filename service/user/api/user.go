@@ -1,6 +1,3 @@
-// Code scaffolded by goctl. Safe to edit.
-// goctl 1.9.2
-
 package main
 
 import (
@@ -11,6 +8,7 @@ import (
 	"xledger/service/user/api/internal/handler"
 	"xledger/service/user/api/internal/svc"
 
+	"github.com/joho/godotenv"
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/rest"
 )
@@ -19,6 +17,8 @@ var configFile = flag.String("f", "etc/user-api.yaml", "the config file")
 
 func main() {
 	flag.Parse()
+
+	_ = godotenv.Load()
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)

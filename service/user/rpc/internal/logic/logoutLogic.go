@@ -38,7 +38,7 @@ func (l *LogoutLogic) Logout(in *user.LogoutRequest) (*user.LogoutResponse, erro
 	// 解析 JWT Token 获取过期时间
 	token, err := jwt.Parse(in.AccessToken, func(token *jwt.Token) (interface{}, error) {
 		// 从配置读取密钥
-		secret := l.svcCtx.Config.JwtSecret
+		secret := l.svcCtx.Config.Auth.AccessSecret
 		if secret == "" {
 			secret = "xledger-secret-key-change-in-production"
 		}

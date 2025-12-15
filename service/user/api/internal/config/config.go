@@ -4,6 +4,8 @@
 package config
 
 import (
+	"xledger/common/config"
+
 	"github.com/zeromicro/go-zero/rest"
 	"github.com/zeromicro/go-zero/zrpc"
 )
@@ -14,5 +16,6 @@ type Config struct {
 		AccessSecret string
 		AccessExpire int64
 	}
+	Redis   config.Redis
 	UserRpc zrpc.RpcClientConf
 }
